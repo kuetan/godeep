@@ -54,9 +54,16 @@ func predict(x ,w1,b1,w2,b2 *mat64.Dense) (y *mat64.Dense) {
 	return y
 }
 
-func cross_entropy_error( *mat64.Dense) *mat64.Dense {
+func log_add(i,j int, v float64) float64 {
 	delta :=1e-7
-	return -Sum(MulElem(t,log(y+delta)))
+	res :=math.Log(v + delta)
+	return res
+}
+
+func cross_entropy_error(t,y *mat64.Dense) *mat64.Dense {
+	z := y.Apply(log_add,y)
+	t.MulElem(t,y)
+	return -mat64.Sum(t)
 }
 
 func loss(x,t,w1,b1,w2,b2 mat64.Dense) *mat64.Dense  {
