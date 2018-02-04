@@ -9,12 +9,12 @@ import (
 	"fmt"
 )
 
-type float64 []byte
+type RawImage []byte
 
 type Set struct {
 	NRow   int
 	NCol   int
-	Images []float64 //RawImage
+	Images []RawImage //RawImage
 	Labels []float64
 }
 
@@ -36,7 +36,7 @@ func ReadSet(iname, lname string) (set *Set, err error) {
 	return
 }
 
-func ReadImageFile(name string) (rows, cols int, imgs []float64, err error) {
+func ReadImageFile(name string) (rows, cols int, imgs []RawImage, err error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return 0, 0, nil, err
@@ -49,7 +49,7 @@ func ReadImageFile(name string) (rows, cols int, imgs []float64, err error) {
 	return readImageFile(z)
 }
 
-func readImageFile(r io.Reader) (rows, cols int, imgs []float64, err error) {
+func readImageFile(r io.Reader) (rows, cols int, imgs []RawImage, err error) {
 	var (
 		magic int32
 		n     int32
@@ -71,10 +71,10 @@ func readImageFile(r io.Reader) (rows, cols int, imgs []float64, err error) {
 	if err = binary.Read(r, binary.BigEndian, &ncol); err != nil {
 		return 0, 0, nil, err
 	}
-	imgs = make([]float64, n)
+	imgs = make([]RawImage, n)
 	m := int(nrow * ncol)
 	for i := 0; i < int(n); i++ {
-		imgs[i] = make(float64, m)
+		imgs[i] = make(RawImage, m)
 		m_, err := io.ReadFull(r, imgs[i])
 		if err != nil {
 			return 0, 0, nil, err

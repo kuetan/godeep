@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"math/rand"
 	"math"
 	"./setup"
@@ -248,16 +249,24 @@ func (p *TwoLayerNet_params) gradient(x ,t *mat64.Dense) *Grads {
 	return grads
 }
 
+func Float64frombytes(bytes []byte) float64 {
+    bits := binary.LittleEndian.Uint64(bytes)
+    float := math.Float64frombits(bits)
+    return float
+}
+
+
 
 func main() {
 	train, test, err := read.Load("./dataset/mnist/")
 	err = err
 	test = test
-	//fmt.Println(train.Images[0])
+	fmt.Println(train.Images[0])
 	tmp :=train.Labels[0]
 	fmt.Println(train.Labels[0])
-	if (tmp == 5 ) {
-		fmt.Println(tmp)
+	fmt.Println(Float64frombytes(train.Images[0]))
+	if (float64(tmp) == 5.0 ) {
+	fmt.Println(tmp)
 	}
 	network := &TwoLayerNet_params{}
 	iters_num := float64(1000)
@@ -266,17 +275,17 @@ func main() {
 	learning_rate := 0.1
 	tests := mat64.NewDense(1, 1, train.Labels)
 	iter_per_epoch := math.Max(train_size/ batch_size,1.0)
-	for i := 0; i < int(iters_num/batch_size); i++  {
+	for i := 0; i < int(iters_num/batch_size); i++	{
 		batch_size_int := int(batch_size)
 		x_batch := train.Images[i*batch_size_int:(i+1)*batch_size_int]
 		t_batch := train.Labels[i*batch_size_int:(i+1)*batch_size_int]
-
+ 
 		grad := network.gradient(x_batch,t_batch)
 		network.w1 -= learning_rate * grad.w1
 		network.b1 -= learning_rate * grad.b1
 		network.w2 -= learning_rate * grad.w2
 		network.b2 -= learning_rate * grad.b2
-
+ 
 		loss := network.loss(x_batch,t_batch)
 	}
 }
