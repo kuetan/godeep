@@ -8,23 +8,30 @@ import (
 	"github.com/gonum/matrix/mat64"
 )
 
+type Grad struct  {
+	W1
+	B1
+	W2
+	B2
+}
+
 
 func setup(input_size int , hidden_size int,output_size int) (w1 ,b1,w2,b2 *mat64.Dense) {
 	w1_init := make([]float64, input_size * hidden_size)
 	for i := range w1_init {
 		w1_init[i] = rand.NormFloat64()
-		
+
 	}
 	// fmt.Println(w1_init)
 	w1 = mat64.NewDense(input_size, hidden_size, w1_init)
-	b1 = mat64.NewDense(input_size, hidden_size, nil) 
+	b1 = mat64.NewDense(input_size, hidden_size, nil)
 	w2_init := make([]float64, hidden_size * output_size )
 	for i := range w2_init {
 		w2_init[i] = rand.NormFloat64()
-		
+
 	}
 	w2 = mat64.NewDense(hidden_size, output_size, w2_init)
-	b2 = mat64.NewDense(hidden_size, output_size, nil) 
+	b2 = mat64.NewDense(hidden_size, output_size, nil)
 	return w1,b1,w2,b2
 }
 
@@ -34,7 +41,7 @@ func Sigmoid(x float64) (y float64) {
 
 func predict(x ,w1,b1,w2,b2 *mat64.Dense) (y *mat64.Dense) {
 	var a1 *mat64.Dense
-	a1.Mul(x, w1) 
+	a1.Mul(x, w1)
 	a1.Add(a1,b1)
 	// for i := 0; i < len(a1); i++ {
 	// 	z1 := append(a1, Sigmoid(a1[i]))
@@ -42,32 +49,37 @@ func predict(x ,w1,b1,w2,b2 *mat64.Dense) (y *mat64.Dense) {
 	//z1 := math.Exp(a1)
 	z1 := a1
 	var a2 *mat64.Dense
-	a2.Mul(z1, w2) 
+	a2.Mul(z1, w2)
 	a2.Add(a2,b2)
 	//a2 += b2
 	// for i := 0; i < len(a2); i++ {
 	// 	y := append(a2, Sigmoid(a2[i]))
 	// }
-	
+
 	y = a2
 	//y = math.exp(a2)
 	return y
 }
 
-func log_add(i,j int, v float64) float64 {
-	delta :=1e-7
-	res :=math.Log(v + delta)
-	return res
-}
+// func log_add(i,j int, v float64) float64 {
+// 	delta :=1e-7
+// 	res :=math.Log(v + delta)
+// 	return res
+// }
 
-func cross_entropy_error(t,y *mat64.Dense) *mat64.Dense {
-	z := y.Apply(log_add,y)
+func cross_entropy_error(t,y *mat64.Dense) float64 {
+	log := func(i,j int, v float64) float64 {
+		delta :=1e-7
+		res :=math.Log(v + delta)
+		return res
+	}
+	y.Apply(log,y)
 	t.MulElem(t,y)
-	return -mat64.Sum(t)
+	return mat64.Sum(t)
 }
 
-func loss(x,t,w1,b1,w2,b2 mat64.Dense) *mat64.Dense  {
-	y := predict(x,t,w1,b1,w2,b2)
+func loss(x,t,w1,b1,w2,b2 *mat64.Dense) float64  {
+	y := predict(x,w1,b1,w2,b2)
 	return cross_entropy_error(y,t)
 }
 
@@ -77,11 +89,14 @@ func loss(x,t,w1,b1,w2,b2 mat64.Dense) *mat64.Dense  {
 
 
 
+func numerical_gradient(x,t float64)
+
+
 func main() {
 	train, test, err := read.Load("./dataset/mnist/")
 	train = train
-	if err == nil { 
-		fmt.Println(test.Images[0]) 
+	if err == nil {
+		fmt.Println(test.Images[0])
 	}
 	// fmt.Print(rand.NormFloat64())
 	// fmt.Print(rand.NormFloat64())

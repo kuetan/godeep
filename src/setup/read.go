@@ -15,7 +15,7 @@ type Set struct {
 	NRow   int
 	NCol   int
 	Images []RawImage
-	Labels []Label
+	Labels []float64
 }
 
 const (
@@ -91,7 +91,7 @@ type Label uint8
 
 // ReadLabelFile opens the named label file (training or test), parses it and
 // returns all labels in order.
-func ReadLabelFile(name string) (labels []Label, err error) {
+func ReadLabelFile(name string) (labels []float64, err error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func ReadLabelFile(name string) (labels []Label, err error) {
 	return readLabelFile(z)
 }
 
-func readLabelFile(r io.Reader) (labels []Label, err error) {
+func readLabelFile(r io.Reader) (labels []float64, err error) {
 	var (
 		magic int32
 		n     int32
@@ -118,13 +118,14 @@ func readLabelFile(r io.Reader) (labels []Label, err error) {
 	if err = binary.Read(r, binary.BigEndian, &n); err != nil {
 		return nil, err
 	}
-	labels = make([]Label, n)
+	labels = make([]float64, n)
 	for i := 0; i < int(n); i++ {
-		var l Label
+		var l float64
 		if err := binary.Read(r, binary.BigEndian, &l); err != nil {
 			return nil, err
 		}
 		labels[i] = l
+
 	}
 	return labels, nil
 }
@@ -144,8 +145,7 @@ func main(){
 	train, test, err := Load("./dataset/mnist/")
 	train = train
 	test = test
-	if err == nil { 
-		fmt.Println(test.Images[0]) 
-	} 
+	if err == nil {
+		fmt.Println(test.Images[0])
+	}
 }
-
