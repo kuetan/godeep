@@ -141,11 +141,11 @@ func Load(dir string) (train, test *Set, err error) {
 }
 
 func main(){
-	train, test, err := Load("./dataset/mnist/")
-	train = train
-	test = test
-	if err == nil { 
-		fmt.Println(test.Images[0]) 
-	} 
+	//train, test, err := Load("./dataset/mnist/")
+	//train = train
+	//test = test
+	//if err == nil {
+	// 	fmt.Println(test.Images[0])
+	//}
+	MNISTLoader.LoadTrain()
 }
-
