@@ -9,7 +9,8 @@ import (
 	"fmt"
 )
 
-type RawImage []byte
+//type RawImage []byte
+type RawImage [][]float64
 
 type Set struct {
 	NRow   int
@@ -73,14 +74,28 @@ func readImageFile(r io.Reader) (rows, cols int, imgs []RawImage, err error) {
 	}
 	imgs = make([]RawImage, n)
 	m := int(nrow * ncol)
+	fmt.Println(m)
 	for i := 0; i < int(n); i++ {
-		imgs[i] = make(RawImage, m)
-		m_, err := io.ReadFull(r, imgs[i])
-		if err != nil {
-			return 0, 0, nil, err
+		img := make([]byte, m)
+		items[i] = make([]float64, m)
+		//imgs[i] = make(RawImage, m)
+		//m_, err := io.ReadFull(r, imgs[i])
+		// if err != nil {
+		// 	return 0, 0, nil, err
+		// }
+		// if m_ != int(m) {
+		// 	return 0, 0, nil, os.ErrInvalid
+		// }
+		//if err := binary.Read(r, binary.BigEndian, img); err != nil {
+		// 	return nil, 0, errors.New("mnistloader: cannot read image")
+		//}
+		if err := binary.Read(r, binary.BigEndian, img); err != nil {
+			return nil, 0, errors.New("mnistloader: cannot read image")
 		}
-		if m_ != int(m) {
-			return 0, 0, nil, os.ErrInvalid
+		for j, val := range img {
+			//fmt.Println(imgs[i][j])
+			imgs[i][j] = float64(val) /// 256.0 // normalize
+			fmt.Println(imgs[i][j])
 		}
 	}
 	return int(nrow), int(ncol), imgs, nil

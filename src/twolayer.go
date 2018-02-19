@@ -4,10 +4,11 @@ import (
 	"encoding/binary"
 	"math/rand"
 	"math"
-	"./setup"
+	//"./setup"
+	"./load"
 	"fmt"
 	"github.com/gonum/matrix/mat64"
-//	"reflect"
+	//"reflect"
 )
 type AffineLayer interface {
 	init(w,b *mat64.Dense)
@@ -24,14 +25,18 @@ type AffineLayer_param struct  {
 }
 
 func (p *AffineLayer_param) init(w,b *mat64.Dense)  {
+	fmt.Println("before")
 	p.w = w
+	fmt.Println("after")
 	p.b = b
 	p.x = nil
 	p.dw = nil
 	p.db = nil
+	fmt.Println(p.dw)
 }
 
 func (p *AffineLayer_param) forward(x *mat64.Dense)  *mat64.Dense {
+	fmt.Println(x)
 	p.x = x
 	var out *mat64.Dense
 	out.Mul(x,p.w)
@@ -227,7 +232,9 @@ func (p *TwoLayerNet_params) loss(x,t *mat64.Dense) *mat64.Dense {
 	return p.SoftmaxWithLoss.forward(y,t)
 }
 
-func (p *TwoLayerNet_params) gradient(x ,t *mat64.Dense) *Grads {
+func (p *TwoLayerNet_params) gradient(x ,t,init_w,init_b *mat64.Dense) *Grads {
+
+	p.Affine1.init(init_w,init_b)
 	x = p.Affine1.forward(x)
 	x = p.Relu1.forward(x)
 	y := p.Affine2.forward(x)
@@ -256,36 +263,70 @@ func Float64frombytes(bytes []byte) float64 {
 }
 
 
+func float2dense(data [][]float64) *mat64.Dense {
+	var res []float64
+	for i := range data {
+		//fmt.Println(reflect.ValueOf(data[i]).Type())
+		res = append(res, data[i]...)
+	}
+	sum := mat64.NewDense(len(data),len(data[0]),res)
+	return sum
+}
+
+
+
 
 func main() {
-	train, test, err := read.Load("./dataset/mnist/")
-	err = err
-	test = test
-	fmt.Println(train.Images[0])
-	tmp :=train.Labels[0]
-	fmt.Println(train.Labels[0])
-	fmt.Println(Float64frombytes(train.Images[0]))
-	if (float64(tmp) == 5.0 ) {
-	fmt.Println(tmp)
-	}
+	//train, test, err := read.Load("./dataset/mnist/")
+	images ,labels := MNISTLoader.LoadTrain("./dataset/mnist/")
+	//err = err
+	//num = num
+	//train = train
+	//fmt.Println("ya")
+	//fmt.Println(images[0:10])
+	//fmt.Println(reflect.ValueOf(images[0:2]).Type())
+	//fmt.Println(len(images[0:2][0]))
+	//a = append(a,
+	//fmt.Println(labels[0])
+	//tmp :=train.Labels[0]
+	//fmt.Println(train.Labels[0])
+	//fmt.Println(Float64frombytes(train.Images[0]))
+	//if (float64(tmp) == 5.0 ) {
+	//fmt.Println(tmp)
+	//}
 	network := &TwoLayerNet_params{}
 	iters_num := float64(1000)
-	train_size := float64(len(train.Labels))
+	//train_size := float64(len(labels))
 	batch_size := float64(100)
 	learning_rate := 0.1
-	tests := mat64.NewDense(1, 1, train.Labels)
-	iter_per_epoch := math.Max(train_size/ batch_size,1.0)
+	//tests := mat64.NewDense(1, 1, labels)
+	//iter_per_epoch := math.Max(train_size/ batch_size,1.0)
 	for i := 0; i < int(iters_num/batch_size); i++	{
 		batch_size_int := int(batch_size)
-		x_batch := train.Images[i*batch_size_int:(i+1)*batch_size_int]
-		t_batch := train.Labels[i*batch_size_int:(i+1)*batch_size_int]
- 
-		grad := network.gradient(x_batch,t_batch)
-		network.w1 -= learning_rate * grad.w1
-		network.b1 -= learning_rate * grad.b1
-		network.w2 -= learning_rate * grad.w2
-		network.b2 -= learning_rate * grad.b2
- 
-		loss := network.loss(x_batch,t_batch)
+		x_batch := images[i*batch_size_int:(i+1)*batch_size_int]
+		x_batch_dense := float2dense(x_batch)
+		t_batch := labels[i*batch_size_int:(i+1)*batch_size_int]
+		t_batch_dense := mat64.NewDense(len(t_batch), 1, t_batch)
+		init_w := mat64.NewDense(len(x_batch), len(x_batch[0]), nil)
+		init_b := mat64.NewDense(len(x_batch), len(x_batch[0]), nil)
+		grad := network.gradient(x_batch_dense,t_batch_dense,init_w,init_b)
+		mul_rate := func(i,j int, v float64) float64 {
+			return v * learning_rate
+		}
+		grad.w1.Apply(mul_rate,grad.w1)
+		grad.b1.Apply(mul_rate,grad.b1)
+		grad.w2.Apply(mul_rate,grad.w2)
+		grad.b2.Apply(mul_rate,grad.b2)
+		network.w1.Sub(network.w1,grad.w1)
+		network.b1.Sub(network.b1,grad.b1)
+		network.w2.Sub(network.w2,grad.w2)
+		network.b2.Sub(network.b2,grad.b2)
+		//network.w1 -= learning_rate * grad.w1
+		//network.b1 -= learning_rate * grad.b1
+		//network.w2 -= learning_rate * grad.w2
+		//network.b2 -= learning_rate * grad.b2
+
+		loss := network.loss(x_batch_dense,t_batch_dense)
+		fmt.Println(loss)
 	}
 }
